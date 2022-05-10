@@ -59,6 +59,30 @@ class SupplierSearch extends Supplier
             return $dataProvider;
         }
 
+        $this->applyParams($query);
+
+        return $dataProvider;
+    }
+
+    public function buildQuery($params) {
+        $query = Supplier::find();
+        $this->load($params);
+        if ($this->validate()) {
+            $this->applyParams($query);
+        }
+
+        if (isset($params['ids']) && $params['ids'] != '') {
+            $ids = explode(',', $params['ids']);
+            if (count($ids)) {
+                $query->andFilterWhere(['in', 'id', $ids]);
+            }
+        }
+
+        return $query;
+    }
+
+    public function applyParams($query)
+    {
         // grid filtering conditions
         if ($this->id != '') {
             $condition = '';
@@ -83,7 +107,5 @@ class SupplierSearch extends Supplier
         $query->andFilterWhere(['like', 'name', $this->name])
             ->andFilterWhere(['like', 'code', $this->code])
             ->andFilterWhere(['like', 't_status', $this->t_status]);
-
-        return $dataProvider;
     }
 }

@@ -7,6 +7,7 @@ use app\models\SupplierSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\Response;
 
 /**
  * SupplierController implements the CRUD actions for Supplier model.
@@ -114,6 +115,40 @@ class SupplierController extends Controller
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Export search result to CSV.
+     */
+    public function actionExport()
+    {
+        set_time_limit(0);
+        ini_set('memory_limit', '64m');
+
+        try {
+            $query = (new SupplierSearch())->buildQuery($this->request->queryParams);
+
+            $fileName = './tmp/supplier-' . date('YmdHis') . '.csv';
+            $fp = fopen($fileName, 'a');
+            fwrite($fp, chr(0xEF).chr(0xBB).chr(0xBF));
+            $ret = fputcsv($fp, ['ID', 'Supplier', 'Code', 'Status']);
+            if (!$ret) {
+                return $this->asJson(['code' => 1000, 'message' => '写入失败']);
+            }
+
+            $batchSize = 100;
+            foreach ($query->batch($batchSize) as $list) {
+                for ($i = 0; $i < count($list); $i++) {
+                    fputcsv($fp, $list[$i]->toArray());
+                }
+            }
+
+            fclose($fp);
+
+            return $this->response->sendFile($fileName);
+        } catch (\Exception $e) {
+            return $this->asJson(['code' => 5000, 'message' => $e->getMessage()]);
+        }
     }
 
     /**

@@ -42,9 +42,9 @@ class Supplier extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'name' => '供应商名称',
-            'code' => '代码',
-            't_status' => '状态',
+            'name' => 'Supplier Name',
+            'code' => 'Code',
+            't_status' => 'Status',
         ];
     }
 }
